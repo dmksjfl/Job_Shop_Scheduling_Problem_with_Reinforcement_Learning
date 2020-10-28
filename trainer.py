@@ -13,7 +13,7 @@ import torch.optim as optim
 
 from job_env import job_shop_env
 from RL_brain import ActorCritic
-from utils import v_warp
+from utils import v_wrap
 
 def train(args):
     torch.manual_seed(args.seed)
@@ -27,7 +27,7 @@ def train(args):
     model.train()
 
     state = env.reset()
-    state = v_warp(state)
+    state = v_wrap(state)
     done = True
     action_dim = env.expert
 
@@ -51,9 +51,9 @@ def train(args):
             
 
             action, log_prob, entropy, value = model.choose_action((state, (hx,cx)),action_dim)
-            log_prob = log_prob.gather(action_dim, action)
+            log_prob = log_prob.gather(1, action)[0]
             
-            state, reward, done = env.step(action.numpy())
+            state, reward, done = env.step(action.view(-1,).numpy())
             done = done or episode_length >= args.max_episode_length
             ## reward shaping
             reward = max(min(reward, 1), -1)
@@ -62,7 +62,7 @@ def train(args):
                 episode_length = 0
                 state = env.reset()
 
-            state = v_warp(state)
+            state = v_wrap(state)
             values.append(value)
             log_probs.append(log_prob)
             rewards.append(reward)
@@ -94,7 +94,9 @@ def train(args):
 
         optimizer.zero_grad()
 
-        (policy_loss + args.value_loss_coef * value_loss).backward()
+        (policy_loss + args.value_loss_coef * value_loss).backward(torch.ones_like(policy_loss))
         torch.nn.utils.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 
         optimizer.step()
+        print(policy_loss.mean() + args.value_loss_coef * value_loss)
+        print('para updated')

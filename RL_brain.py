@@ -24,7 +24,7 @@ class ActorCritic(torch.nn.Module):
         self.conv3 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
         self.conv4 = nn.Conv2d(32, 32, 3, stride=2, padding=1)
 
-        self.lstm = nn.LSTMCell(32 * 3 * 3, 256)
+        self.lstm = nn.LSTMCell(32*553, 256)
 
         num_outputs = action_space
         self.critic_linear = nn.Linear(256, 1)
@@ -50,7 +50,7 @@ class ActorCritic(torch.nn.Module):
         x = F.relu(self.conv3(x))
         x = F.relu(self.conv4(x))
 
-        x = x.view(-1, 32 * 3 * 3)
+        x = x.view(-1, 32*553)
         hx, cx = self.lstm(x, (hx, cx))
         x = hx
 
@@ -63,5 +63,9 @@ class ActorCritic(torch.nn.Module):
         log_prob = F.log_softmax(logit, dim=-1)
         entropy = -(log_prob * prob).sum(1, keepdim=True)
         
-        action = prob.multinomial(num_samples=action_dim).detach()
+        #action = prob.multinomial(num_samples=action_dim).detach()
+        action=[]
+        for i in range(action_dim):
+            action.append(prob.multinomial(num_samples=1).detach()[0])
+        action = torch.from_numpy(np.array(action,dtype = np.int64).reshape(1,133))
         return action, log_prob, entropy, value

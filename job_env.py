@@ -33,9 +33,10 @@ class job_shop_env():
         self.job_index = list(range(self.job.shape[0]))  ## use for sampling
         self.timeindex = 0   ## use for time recording
         self.state = np.vstack((self.job_status,self.job_distribute_time))
+        self.state = self.state.reshape(self.state.shape[0],self.state.shape[1],1)
         self.done_job = [] ## how many jobs have been done
         self.state_dim = self.state.shape[0]
-        self.action_dim = 10*self.expert
+        self.action_dim = 2
         
         
     def reset(self):
@@ -53,6 +54,7 @@ class job_shop_env():
         self.job_index = list(range(self.job.shape[0]))  ## use for sampling
         self.timeindex = 0   ## use for time recording
         self.state = np.vstack((self.job_status,self.job_distribute_time))
+        self.state = self.state.reshape(self.state.shape[0],self.state.shape[1],1)
         self.done_job = []
         
         return self.state
@@ -82,24 +84,28 @@ class job_shop_env():
                     self.expert_process_time[i].append(0)
                     # how much time a job wait before processing
                     self.job_waiting_time[i].append(self.timeindex)
-                    self.total_job_process_time[job_id[i]] = self.process_time[i][job_id[i]]
+                    self.total_job_process_time[job_id[i]] = self.process_time[i][self.job[job_id[i]][2]]
                 
-                for j in len(self.expert_process_time[i]):
-                    if self.expert_process_time[i][j] == self.process_time[i][self.expert_process_job[j]]:
-                        # if job finished, workload of expert would decrease
-                        self.expert_status[i] -= 1
-                        if self.expert_process_job[j] not in self.done_job:
-                            self.left_job -= 1
-                        self.done_job.append(self.expert_process_job[j])
+                for j in range(len(self.expert_process_time[i])):
+                    if len(self.expert_process_job[j]) != 0:
+                        #print(self.expert_process_job[j])
+                        if self.expert_process_time[i][j] == self.process_time[i][self.job[self.expert_process_job[j][0]][2]]:
+                            # if job finished, workload of expert would decrease
+                            self.expert_status[i] -= 1
+                            if self.expert_process_job[j] not in self.done_job:
+                                self.left_job -= 1
+                            self.done_job.append(self.expert_process_job[j])
             ## calculate total time consumed
-            self.total_time += sum(self.job_waiting_time[i]) + sum(self.total_job_process_time[i])
+            self.total_time += sum(self.job_waiting_time[i]) + self.total_job_process_time[i].sum()
+            self.expert_process_time[i] = [i + 1 for i in self.expert_process_time[i]]
         
         ## reward takes the minus of total time*0.001 and left job num
         reward = 1 -0.001*self.total_time - self.left_job/self.job_num
         self.timeindex += 1
-        self.expert_process_time += 1
+        
         ## update state info
-        self.state = np.hstack((self.expert_status,self.job_distribute_time))
+        self.state = np.vstack((self.job_status,self.job_distribute_time))
+        self.state = self.state.reshape(self.state.shape[0],self.state.shape[1],1)
         
         if self.left_job == 0:
             self.done = True
