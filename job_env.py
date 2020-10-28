@@ -84,23 +84,30 @@ class job_shop_env():
                     self.expert_process_time[i].append(0)
                     # how much time a job wait before processing
                     self.job_waiting_time[i].append(self.timeindex)
+                    # if expert could not handle the job, exit
                     self.total_job_process_time[job_id[i]] = self.process_time[i][self.job[job_id[i]][2]]
                 
+                delete_index = []
                 for j in range(len(self.expert_process_time[i])):
-                    if len(self.expert_process_job[j]) != 0:
-                        #print(self.expert_process_job[j])
-                        if self.expert_process_time[i][j] == self.process_time[i][self.job[self.expert_process_job[j][0]][2]]:
+                    if len(self.expert_process_job[i]) != 0:
+                        if self.expert_process_time[i][j] == self.process_time[i][self.job[self.expert_process_job[i][j]][2]]:
                             # if job finished, workload of expert would decrease
                             self.expert_status[i] -= 1
-                            if self.expert_process_job[j] not in self.done_job:
+                            if self.expert_process_job[i][j] not in self.done_job:
                                 self.left_job -= 1
-                            self.done_job.append(self.expert_process_job[j])
+                            self.done_job.append(self.expert_process_job[i][j])
+                            delete_index.append(j)
+                if len(delete_index) > 0:
+                    for k in delete_index:
+                        del self.expert_process_job[i][k]
+                        del self.expert_process_time[i][k]
             ## calculate total time consumed
             self.total_time += sum(self.job_waiting_time[i]) + self.total_job_process_time[i].sum()
             self.expert_process_time[i] = [i + 1 for i in self.expert_process_time[i]]
         
         ## reward takes the minus of total time*0.001 and left job num
-        reward = 1 -0.001*self.total_time - self.left_job/self.job_num
+        #print(self.total_time)
+        reward = 1 - self.left_job/self.job_num
         self.timeindex += 1
         
         ## update state info
@@ -109,4 +116,7 @@ class job_shop_env():
         
         if self.left_job == 0:
             self.done = True
+        print(self.expert_status)
+        print(self.expert_process_job)
+        print(self.done_job)
         return self.state, reward, self.done
