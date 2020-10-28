@@ -57,6 +57,7 @@ def train(args):
             done = done or episode_length >= args.max_episode_length
             ## reward shaping
             reward = max(min(reward, 1), -1)
+            print(reward)
 
             if done:
                 episode_length = 0
