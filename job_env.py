@@ -32,12 +32,14 @@ class job_shop_env():
         self.job_status = np.repeat(1,self.job.shape[0])  ## whether a job is under process
         self.job_index = list(range(self.job.shape[0]))  ## use for sampling
         self.timeindex = 0   ## use for time recording
-        self.state = np.hstack((self.expert_status,self.job_distribute_time))
+        self.state = np.vstack((self.job_status,self.job_distribute_time))
         self.done_job = [] ## how many jobs have been done
+        self.state_dim = self.state.shape[0]
+        self.action_dim = 10*self.expert
         
         
     def reset(self):
-        self.job_num = 1
+        self.job_num = self.job.shape[0]
         self.expert_status = np.repeat(0,self.expert) ## how many jobs an expert is processing
         self.expert_process_job = [[] for i in range(self.expert)]
         self.expert_process_time = [[] for i in range(self.expert)]
@@ -50,8 +52,10 @@ class job_shop_env():
         self.job_status = np.repeat(1,self.job.shape[0])  ## whether a job is under process
         self.job_index = list(range(self.job.shape[0]))  ## use for sampling
         self.timeindex = 0   ## use for time recording
-        self.state = np.hstack((self.expert_status,self.job_distribute_time))
+        self.state = np.vstack((self.job_status,self.job_distribute_time))
         self.done_job = []
+        
+        return self.state
         
     def step(self, action):
         # random generate job
@@ -74,6 +78,7 @@ class job_shop_env():
                 else:
                     self.expert_process_job[i].append(job_id[i])
                     self.expert_status[i] += 1
+                    self.job_status[job_id[i]] = 0
                     self.expert_process_time[i].append(0)
                     # how much time a job wait before processing
                     self.job_waiting_time[i].append(self.timeindex)
@@ -89,8 +94,8 @@ class job_shop_env():
             ## calculate total time consumed
             self.total_time += sum(self.job_waiting_time[i]) + sum(self.total_job_process_time[i])
         
-        ## reward takes the minus of total time*0.001
-        reward = -0.001*self.total_time
+        ## reward takes the minus of total time*0.001 and left job num
+        reward = 1 -0.001*self.total_time - self.left_job/self.job_num
         self.timeindex += 1
         self.expert_process_time += 1
         ## update state info
