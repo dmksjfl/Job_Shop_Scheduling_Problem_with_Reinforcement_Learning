@@ -36,6 +36,6 @@ parser.add_argument('--max-episode-length', type=int, default=1000000,
 if __name__ == '__main__':
     
     args = parser.parse_args()
-    print('start training!')
+    print('start training...')
     train(args)
     
