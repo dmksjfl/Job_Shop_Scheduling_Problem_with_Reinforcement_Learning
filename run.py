@@ -32,6 +32,8 @@ parser.add_argument('--num-steps', type=int, default=20,
                     help='number of forward steps in A3C (default: 20)')
 parser.add_argument('--max-episode-length', type=int, default=1000000,
                     help='maximum length of an episode (default: 1000000)')
+parser.add_argument('--episode', type=int, default=10,
+                    help='How many episode to train the RL algorithm')
 
 if __name__ == '__main__':
     

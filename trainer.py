@@ -14,6 +14,7 @@ import torch.optim as optim
 from job_env import job_shop_env
 from RL_brain import ActorCritic
 from utils import v_wrap
+import csv
 
 def train(args):
     torch.manual_seed(args.seed)
@@ -32,7 +33,11 @@ def train(args):
     action_dim = env.expert
 
     episode_length = 0
-    while True:
+    complete_jobs = []
+    expert_complete_job = []
+    complete_job_start_time = []
+    update_list = []
+    for episode in range(args.episode):
         
         if done:
             cx = torch.zeros(1, 256)
@@ -40,26 +45,38 @@ def train(args):
         else:
             cx = cx.detach()
             hx = hx.detach()
+        
+        if len(complete_jobs) != 0:
+            update_list = [n for m in complete_jobs for n in m]
+            env.update(update_list)
 
         values = []
         log_probs = []
         rewards = []
         entropies = []
 
-        for step in range(args.num_steps):
+        for step in range(args.num_steps+1):
             episode_length += 1
             
 
             action, log_prob, entropy, value = model.choose_action((state, (hx,cx)),action_dim)
             log_prob = log_prob.gather(1, action)[0]
             
-            state, reward, done = env.step(action.view(-1,).numpy())
+            state, reward, done, done_job, done_expert, job_start_time = env.step(action.view(-1,).numpy())
             done = done or episode_length >= args.max_episode_length
             ## reward shaping
             reward = max(min(reward, 1), -1)
-            print(reward)
+            if episode_length % 20 == 0:
+                print(reward)
+                #print(done_job)
 
             if done:
+                complete_jobs.append(done_job)
+                expert_complete_job.append(done_expert)
+                complete_job_start_time.append(job_start_time)
+                print('Complete these jobs with 100 iterations:')
+                print(complete_jobs)
+                print('Current episode:',episode)
                 episode_length = 0
                 state = env.reset()
 
@@ -70,6 +87,23 @@ def train(args):
             entropies.append(entropy)
             if done:
                 break
+        
+        if len(list(set(update_list))) > 8800:
+            ## write results into the csv file
+            with open('submit_{}.csv'.format(len(list(set(update_list)))),'w') as f:
+                writer = csv.writer(f)
+                for i in range(len(complete_jobs)):
+                    for j in range(len(complete_jobs[i])):
+                        writer.writerow([complete_jobs[i][j]+1, expert_complete_job[i][j]+1, complete_job_start_time[i][j]])
+
+        if episode == args.episode -1 or len(list(set(update_list))) == 8840:
+            ## write results into the csv file
+            with open('submit.csv','w') as f:
+                writer = csv.writer(f)
+                for i in range(len(complete_jobs)):
+                    for j in range(len(complete_jobs[i])):
+                        writer.writerow([complete_jobs[i][j]+1, expert_complete_job[i][j]+1, complete_job_start_time[i][j]])
+            break
 
         R = torch.zeros(1, 1)
         if not done:
