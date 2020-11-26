@@ -42,39 +42,29 @@ class Env(object):
                 print('last_done_tasks: ')
                 print(self.done_tasks[-1])
             print('-' * 30)
-#            print(action)
-#            yield action
             
             # 分配
             def alloc(task, expert):
                 # 分配任务
                 print('{}, {}, {}'.format(task.task_id,
-                   expert.expert_id, self.time), file=f)
+                   expert.expert_id+1, self.time), file=f)
                 self.taskQueue.remove(task)
                 expert.assign_working_job(self, task)
+            '''
             
-#            task_pair = {}
+            '''
+################################################
             for task in self.taskQueue:
                 for expert in self.experts:
+                    
                     if (task.question_id in expert.can_do_question_ids()
                         and expert.working_jobs.__len__() < 3
                         and task.allowed_alloc_num > 0):
+                            
+                            
                             alloc(task, expert)
                             break
-#                            if task not in task_pair.keys():
-#                                task_pair[task] = [expert]
-#                            else:
-#                                task_pair[task].append(expert)
-            # random 分配算法
-#            import random
-#            for task in task_pair.keys():
-#                if task not in self.taskQueue:
-#                    continue
-#                l = task_pair[task].__len__()
-#                print(l)
-#                choose_expert_idx = random.randint(0, l-1)
-#                alloc(task, task_pair[task][choose_expert_idx])
-
+#################################################
             self.update()
         return
     
@@ -97,23 +87,9 @@ class Env(object):
             task = self.tasks[self.task_idx]
             # 设置项目开始时间
             assert task.begin_time == self.time
-            
             self.taskQueue.append(task)
-            
             self.task_idx += 1
     
-    def alloc(self):
-        pass
-    
-
-
-#class Agent(object):
-#    def __init__(self, env: Env):
-#        self.env = env
-#        self.state
-#        
-#    def choose_action(self):
-#        return np.random.choice(1, 4)
 
 
 if __name__ == "__main__":
