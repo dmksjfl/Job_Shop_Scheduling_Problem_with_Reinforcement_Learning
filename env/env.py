@@ -33,10 +33,9 @@ class Env(object):
         while len(self.done_tasks) <= 100: # 8840 using 100 for test
             # 添加待执行程序
             self.addTaskToQueue()
-            
-            
             print("time:{}".format(self.time))
-            print(self.taskQueue, end='')
+            
+            
             yield 123
             print(action)
 #            yield action
@@ -54,6 +53,9 @@ class Env(object):
             export.update()
     
     def addTaskToQueue(self):
+        '''
+        添加待分配的任务
+        '''
         while self.tasks[self.task_idx].begin_time <= self.time:
             self.taskQueue.append(self.tasks[self.task_idx])
             self.task_idx += 1
@@ -71,6 +73,9 @@ class Env(object):
 
 if __name__ == "__main__":
     e = Env()
+    
+    e.simulate()
+    
     print(len(e.tasks), e.tasks[0])
     print(len(e.experts), e.experts[0])
     

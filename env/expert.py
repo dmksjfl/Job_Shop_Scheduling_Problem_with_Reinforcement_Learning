@@ -18,7 +18,9 @@ class Expert(object):
         self.total_work_time = 0
     
     def can_do_question_ids(self):
-        return set([q for q in self.ability.keys()])
+        if not hasattr(self, 'can_do'):
+            self.can_do = set([q for q in self.ability.keys()])
+        return self.can_do
     
     def __str__(self):
         return ','.join([str(self.expert_id), str(self.total_work_time)])
@@ -43,10 +45,6 @@ class Expert(object):
         assert len(self.working_jobs) > 0
         #
         self.working_jobs.remove(task)
-    
-    
-    def update_work_time(self):
-        pass
     
     # call at each time update
     def update(self):

@@ -17,15 +17,15 @@ class Task(object):
         '''
         任务的响应超时量
         '''
-        assert 'begin_time' in self.__dict__.keys()
-        assert 'start_time' in self.__dict__.keys()
-        
+        assert hasattr(self, 'begin_time')
+        assert hasattr(self, 'start_time')
         return max(self.start_time - self.begin_time - self.sla_time, 0) / self.sla_time
     
     def R():
-        assert 'last_stay_time' in self.__dict__.keys()
+        assert hasattr(self, last_stay_time)
         return self.last_stay_time / (self.finish_time - self.begin_time)
-        
+    
+    
         
     def __str__(self):
         return ','.join([str(self.task_id), str(self.begin_time)])
