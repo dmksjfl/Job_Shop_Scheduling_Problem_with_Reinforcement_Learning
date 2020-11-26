@@ -12,7 +12,14 @@ class Task(object):
         self.sla_time = sla_time
         
         self.allowed_alloc_num = 5
+
+    def assigned(self, time):
         
+        assert self.allowed_alloc_num > 0
+        self.allowed_alloc_num -= 1
+        self.start_time = time
+        
+
     def M():
         '''
         任务的响应超时量
@@ -22,13 +29,17 @@ class Task(object):
         return max(self.start_time - self.begin_time - self.sla_time, 0) / self.sla_time
     
     def R():
-        assert hasattr(self, last_stay_time)
+        assert hasattr(self, 'last_stay_time')
+        assert hasattr(self, 'finish_time')
         return self.last_stay_time / (self.finish_time - self.begin_time)
     
-    
+    def finish(self, time):
+        self.last_stay_time = time - self.start_time
+        self.finish_time = time
         
     def __str__(self):
-        return ','.join([str(self.task_id), str(self.begin_time)])
+        head = 'taskid  begin_time  \n'
+        return head + ','.join([str(self.task_id), str(self.begin_time)])
         
 if __name__ == "__main__":
     t = Task(1, 10, 105, 90)

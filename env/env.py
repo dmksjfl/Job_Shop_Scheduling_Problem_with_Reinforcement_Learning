@@ -10,6 +10,7 @@ class Env(object):
         self._load_data(path)
         self.reset()
         
+        
     def _load_data(self, path):
         tasks_matrix = pd.read_csv(path + 'work_order.csv',header=None).values
         expert_jobs_matrix = pd.read_csv(path + 'process_time_matrix.csv',header=None).drop([0]).values
@@ -20,7 +21,7 @@ class Env(object):
     
     def reset(self):
         # 待处理的栈
-        self.time = 0
+        self.time = 400
         self.task_idx = 0
         self.taskQueue = []
         self.done_tasks = []
@@ -28,37 +29,81 @@ class Env(object):
         for expert in self.experts:
             expert.reset()
 
-    def simulate(self):        
+    def simulate(self, f):        
         
-        while len(self.done_tasks) <= 100: # 8840 using 100 for test
+        while len(self.done_tasks) <= 8840 and self.time <= 10000: # 8840 using 100 for test
             # 添加待执行程序
             self.addTaskToQueue()
+            print('-' * 30)
             print("time:{}".format(self.time))
-            
-            
-            yield 123
-            print(action)
+            print('待分配个数：', self.taskQueue.__len__())
+            print('已完成个数：', self.done_tasks.__len__())
+            if self.done_tasks:
+                print('last_done_tasks: ')
+                print(self.done_tasks[-1])
+            print('-' * 30)
+#            print(action)
 #            yield action
             
-            # dosomething
+            # 分配
+            def alloc(task, expert):
+                # 分配任务
+                print('{}, {}, {}'.format(task.task_id,
+                   expert.expert_id, self.time), file=f)
+                self.taskQueue.remove(task)
+                expert.assign_working_job(self, task)
             
-            # showStatus
+#            task_pair = {}
+            for task in self.taskQueue:
+                for expert in self.experts:
+                    if (task.question_id in expert.can_do_question_ids()
+                        and expert.working_jobs.__len__() < 3
+                        and task.allowed_alloc_num > 0):
+                            alloc(task, expert)
+                            break
+#                            if task not in task_pair.keys():
+#                                task_pair[task] = [expert]
+#                            else:
+#                                task_pair[task].append(expert)
+            # random 分配算法
+#            import random
+#            for task in task_pair.keys():
+#                if task not in self.taskQueue:
+#                    continue
+#                l = task_pair[task].__len__()
+#                print(l)
+#                choose_expert_idx = random.randint(0, l-1)
+#                alloc(task, task_pair[task][choose_expert_idx])
+
             self.update()
         return
     
     
     def update(self):
+        # 时间步更新
         self.time += 1
         for export in self.experts:
-            export.update()
+            export.update(self)
+        
+        # check finish
     
     def addTaskToQueue(self):
         '''
         添加待分配的任务
         '''
-        while self.tasks[self.task_idx].begin_time <= self.time:
-            self.taskQueue.append(self.tasks[self.task_idx])
+        print(self.tasks.__len__())
+        while (self.task_idx < 8840
+         and self.tasks[self.task_idx].begin_time <= self.time):
+            task = self.tasks[self.task_idx]
+            # 设置项目开始时间
+            assert task.begin_time == self.time
+            
+            self.taskQueue.append(task)
+            
             self.task_idx += 1
+    
+    def alloc(self):
+        pass
     
 
 
@@ -73,9 +118,9 @@ class Env(object):
 
 if __name__ == "__main__":
     e = Env()
+    with open('output.csv', 'w') as f:
+        e.simulate(f)
     
-    e.simulate()
-    
-    print(len(e.tasks), e.tasks[0])
-    print(len(e.experts), e.experts[0])
+#    print(len(e.tasks), e.tasks[0]) # 8840 1,481
+#    print(len(e.experts), e.experts[0]) # 8840 1,481
     
