@@ -31,7 +31,7 @@ class Env(object):
 
     def simulate(self, f):        
         
-        while len(self.done_tasks) <= 8840 and self.time <= 10000: # 8840 using 100 for test
+        while len(self.done_tasks) < 8840 and self.time <= 10000: # 8840 using 100 for test
             # 添加待执行程序
             self.addTaskToQueue()
             print('-' * 30)
@@ -54,14 +54,16 @@ class Env(object):
             
             '''
 ################################################
+# How to sort the taskQueue and the expert?
+            import random
+            
             for task in self.taskQueue:
+#                selected_expert = self.experts[0]:
+                random.shuffle(self.experts)
                 for expert in self.experts:
-                    
                     if (task.question_id in expert.can_do_question_ids()
                         and expert.working_jobs.__len__() < 3
                         and task.allowed_alloc_num > 0):
-                            
-                            
                             alloc(task, expert)
                             break
 #################################################
