@@ -29,3 +29,6 @@ One could run the following code to train the agent:
 ```python
 python run.py --lr=0.01 --gamma=0.9 --seed=2020 --num-steps=100 --max-episode-length=1e5
 ```
+
+## Reference on better JSSP solution
+A paper named `A Reinforcement Learning Environment For Job-Shop Scheduling` is published in arXiv on 4/9, 2021. One could refer to this paper for action design, state design and most importantly, reward function design. The paper also provides a JSSP standard environment and a baseline solution for the environment, which might be of great help for those who are interested in JSSP. The paper could be found [https://arxiv.org/pdf/2104.03760.pdf](here) and the corresponding code could be found [https://github.com/prosysscience/Job-Shop-Scheduling](here)
